@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>Arco-Mix — Demanda vs Produção</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
     :root{
@@ -30,9 +31,9 @@
     .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
     .header-brand{display:flex;align-items:center;gap:14px}
     .logo-wrap{
-      display:flex;flex-direction:column;align-items:center;
-      background:rgba(255,255,255,.12);border-radius:12px;padding:6px 10px;
-      backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);flex-shrink:0
+      display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,.12);
+      border-radius:12px;padding:6px 10px;backdrop-filter:blur(8px);
+      border:1px solid rgba(255,255,255,.2);flex-shrink:0
     }
     .logo-svg{width:72px;height:38px}
     .logo-text{
@@ -71,7 +72,6 @@
       padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;
       background:rgba(245,200,0,.25);color:#fff3b0;border:1px solid rgba(245,200,0,.4)
     }
-
     .status-bar{
       display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:6px
     }
@@ -152,11 +152,10 @@
     .bd{background:#ffebee;color:#c62828}
     .bw{background:#fff8e1;color:#f57f17}
     .bi{background:#e3f2fd;color:#1565c0}
-
     .ring{
       width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.2);
-      display:flex;align-items:center;justify-content:center;font-size:16px;
-      font-weight:800;color:#fff;margin:8px auto;border:3px solid rgba(255,255,255,.45)
+      display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;
+      margin:8px auto;border:3px solid rgba(255,255,255,.45)
     }
 
     .prog{margin-top:10px}
@@ -214,8 +213,8 @@
     .evo-prv{font-size:11px;color:var(--muted)}
     .evo-pct{font-size:11px;font-weight:700;display:inline-block;padding:2px 7px;border-radius:10px;margin-top:2px}
     .sum-row{
-      display:flex;align-items:center;justify-content:space-between;
-      background:var(--bg);border-radius:var(--radius-sm);padding:12px 16px;margin-top:10px
+      display:flex;align-items:center;justify-content:space-between;background:var(--bg);
+      border-radius:var(--radius-sm);padding:12px 16px;margin-top:10px
     }
 
     .ins{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:var(--radius-sm)}
@@ -242,11 +241,12 @@
       flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px
     }
     .overlay.hidden{display:none}
-    .spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--red);
-      border-radius:50%;animation:spin .8s linear infinite}
+    .spinner{
+      width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--red);
+      border-radius:50%;animation:spin .8s linear infinite
+    }
     @keyframes spin{to{transform:rotate(360deg)}}
     .overlay-txt{font-size:13px;font-weight:600;color:var(--muted)}
-
     .toast{
       position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
       background:#1a1a2e;color:#fff;padding:10px 22px;border-radius:20px;
@@ -364,9 +364,6 @@
   Dashboard Demanda × Produção · <span id="footerPeriod">—</span>
 </footer>
 
-<!-- SheetJS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <script>
 'use strict';
 
@@ -417,47 +414,44 @@ function toNum(v){
   if(v===null||v===undefined||v==='') return 0;
   if(typeof v==='number') return isNaN(v)?0:v;
 
-  let s = String(v).trim();
-  s = s.replace(/R\$/gi,'').replace(/%/g,'').replace(/\s/g,'');
+  let s=String(v).trim();
+  s=s.replace(/R\$/gi,'').replace(/%/g,'').replace(/\s/g,'');
 
   if(/^\d{1,3}(\.\d{3})*,\d+$/.test(s)){
-    s = s.replace(/\./g,'').replace(',','.');
+    s=s.replace(/\./g,'').replace(',','.');
   }else if(/^\d+,\d+$/.test(s)){
-    s = s.replace(',','.');
+    s=s.replace(',','.');
   }else{
-    s = s.replace(/,/g,'');
+    s=s.replace(/,/g,'');
   }
 
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : n;
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
 }
 
 function toDate(v){
   if(!v) return '';
 
   if(typeof v==='number' && v>40000 && v<60000){
-    const d = new Date(Math.round((v-25569)*86400*1000));
+    const d=new Date(Math.round((v-25569)*86400*1000));
     return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
   }
 
-  const s = String(v).trim();
+  const s=String(v).trim();
 
-  const m1 = s.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i);
+  const m1=s.match(/(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})/i);
   if(m1){
-    const meses = {
-      janeiro:0,fevereiro:1,marco:2,abril:3,maio:4,junho:5,
-      julho:6,agosto:7,setembro:8,outubro:9,novembro:10,dezembro:11
-    };
-    const mes = meses[normalizeText(m1[2]).toLowerCase()] ?? 0;
-    const d = new Date(+m1[3],mes,+m1[1]);
+    const meses={janeiro:0,fevereiro:1,marco:2,abril:3,maio:4,junho:5,julho:6,agosto:7,setembro:8,outubro:9,novembro:10,dezembro:11};
+    const mes=meses[normalizeText(m1[2]).toLowerCase()] ?? 0;
+    const d=new Date(+m1[3],mes,+m1[1]);
     if(!isNaN(d.getTime())){
       return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
     }
   }
 
-  const m2 = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  const m2=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
   if(m2){
-    const d = new Date(+m2[3],+m2[2]-1,+m2[1]);
+    const d=new Date(+m2[3],+m2[2]-1,+m2[1]);
     if(!isNaN(d.getTime())){
       return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
     }
@@ -467,38 +461,34 @@ function toDate(v){
 }
 
 function isDiaSemana(v){
-  const s = normalizeText(v);
+  const s=normalizeText(v);
   return ['SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO','DOMINGO']
     .some(d=>s.startsWith(d));
 }
 
-function diaKey(v){
-  return normalizeText(v).substring(0,5);
-}
+function diaKey(v){ return normalizeText(v).substring(0,5); }
 
 function ordemDia(v){
-  const s = normalizeText(v);
-  const ordem = ['SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO','DOMINGO'];
-  const idx = ordem.findIndex(d=>s.startsWith(d));
-  return idx===-1 ? 99 : idx;
+  const s=normalizeText(v);
+  const ordem=['SEGUNDA','TERCA','QUARTA','QUINTA','SEXTA','SABADO','DOMINGO'];
+  const idx=ordem.findIndex(d=>s.startsWith(d));
+  return idx===-1?99:idx;
 }
 
-function rowToText(row){
-  return (row||[]).map(normalizeText).join(' | ');
-}
+function rowToText(row){ return (row||[]).map(normalizeText).join(' | '); }
 
 function rowHasAll(row, terms){
-  const txt = rowToText(row);
+  const txt=rowToText(row);
   return terms.every(t=>txt.includes(normalizeText(t)));
 }
 
 function rowHasSome(row, terms){
-  const txt = rowToText(row);
+  const txt=rowToText(row);
   return terms.some(t=>txt.includes(normalizeText(t)));
 }
 
 function findRowIndex(rows, predicate, start=0, end=null){
-  const lim = end ?? rows.length;
+  const lim=end ?? rows.length;
   for(let i=start;i<lim;i++){
     if(predicate(rows[i]||[],i)) return i;
   }
@@ -542,7 +532,7 @@ function allColsLike(row, patterns){
     const c=normalizeText(row[i]);
     if(!c) continue;
     for(const p of patterns){
-      const ok = typeof p==='string'
+      const ok=typeof p==='string'
         ? c.includes(normalizeText(p))
         : p.test(c);
       if(ok){
@@ -581,16 +571,16 @@ function setStatus(txt,color){
   document.getElementById('statusDot').className='dot dot-'+color;
 }
 
-/* ==========================================
+/* ==============================
    CSV
-========================================== */
+============================== */
 function splitCsvLine(line){
   const cols=[]; let cur=''; let inQ=false;
   for(let i=0;i<line.length;i++){
     const ch=line[i];
     if(ch === '"'){
       if(inQ && line[i+1] === '"'){ cur+='"'; i++; }
-      else inQ = !inQ;
+      else inQ=!inQ;
     }else if(ch===',' && !inQ){
       cols.push(cur); cur='';
     }else{
@@ -602,17 +592,13 @@ function splitCsvLine(line){
 }
 
 function parseCSV(csvText){
-  const rows = csvText
-    .replace(/\r/g,'')
-    .split('\n')
-    .map(splitCsvLine);
-
+  const rows=csvText.replace(/\r/g,'').split('\n').map(splitCsvLine);
   return parseRowsRobusto(rows);
 }
 
-/* ==========================================
+/* ==============================
    WORKBOOK
-========================================== */
+============================== */
 function chooseBestSheet(workbook){
   let best=null, bestScore=-1;
 
@@ -645,9 +631,9 @@ function parseExcelWorkbook(workbook){
   return parseRowsRobusto(chosen.rows);
 }
 
-/* ==========================================
+/* ==============================
    PARSER ROBUSTO
-========================================== */
+============================== */
 function parseRowsRobusto(rows){
   try{
     const periodo=parsePeriodo(rows);
@@ -658,7 +644,6 @@ function parseRowsRobusto(rows){
     diasMap=evo.diasMap;
 
     const dias=Object.values(diasMap).sort((a,b)=>ordemDia(a.nome)-ordemDia(b.nome));
-
     if(dias.length>0){
       dias.reduce((a,b)=>a.demanda>b.demanda?a:b,dias[0]).emoji='🏆';
     }
@@ -713,9 +698,9 @@ function parsePeriodo(rows){
     return n && !n.includes('PERIODO') && !n.includes('COMPARATIVO');
   });
 
-  return{
-    inicio:vals[0]?toDate(vals[0]):'',
-    fim:vals[1]?toDate(vals[1]):''
+  return {
+    inicio: vals[0]?toDate(vals[0]):'',
+    fim: vals[1]?toDate(vals[1]):''
   };
 }
 
@@ -738,6 +723,7 @@ function parseFinanceiro(rows){
   let dR_auto=toNum(dataRow[colAuto>=0?colAuto:0]);
   let dR_dig=toNum(dataRow[colDig>=0?colDig:1]);
   let dR_tot=toNum(dataRow[colTots[0]??2]);
+
   let pR_tot=toNum(dataRow[colTots[1]??5]);
   let pR_dig=toNum(dataRow[6]);
   let pR_auto=toNum(dataRow[7]);
@@ -766,32 +752,56 @@ function parsePeso(rows){
   if(idx===-1) return null;
 
   const subHeaderRow=rows[idx+1]||[];
-  const dataRowIx=findNextNumericRow(rows,idx+1,4,4);
+  const dataRowIx=findNextNumericRow(rows,idx+1,4,5);
   const dataRow=dataRowIx!==-1?rows[dataRowIx]:[];
 
-  const colAuto=firstColLike(subHeaderRow,['AUTOMATICO']);
-  const colDig=firstColLike(subHeaderRow,['DIGITADO']);
-  const colTots=allColsLike(subHeaderRow,['TOTAL']);
+  console.log('=== parsePeso ===');
+  console.log('idx bloco kg:', idx);
+  console.log('subHeaderRow:', subHeaderRow);
+  console.log('dataRowIx:', dataRowIx);
+  console.log('dataRow:', dataRow);
 
-  let dK_auto=toNum(dataRow[colAuto>=0?colAuto:0]);
-  let dK_dig=toNum(dataRow[colDig>=0?colDig:1]);
-  let dK_tot=toNum(dataRow[colTots[0]??2]);
-  let pK_tot=toNum(dataRow[colTots[1]??5]);
-  let pK_dig=toNum(dataRow[6]);
+  const normHeader=(subHeaderRow||[]).map(c=>normalizeText(c));
+
+  let dK_auto=toNum(dataRow[0]);
+  let dK_dig =toNum(dataRow[1]);
+  let dK_tot =toNum(dataRow[2]);
+
+  let pK_tot =toNum(dataRow[5]);
+  let pK_dig =toNum(dataRow[6]);
   let pK_auto=toNum(dataRow[7]);
 
-  if(dK_tot===0 || pK_tot===0){
-    const nums=dataRow.map(toNum).filter(n=>n>100 && n<10000000);
-    if(nums.length>=6){
-      dK_auto=nums[0]||0;
-      dK_dig=nums[1]||0;
-      dK_tot=nums[2]||0;
-      pK_tot=nums[5]||0;
-      pK_dig=nums[6]||0;
-      pK_auto=nums[7]||0;
+  if ((pK_tot===0 && pK_dig===0 && pK_auto===0) || dataRow.length<8) {
+    const totalCols=[], autoCols=[], digCols=[];
+
+    normHeader.forEach((h,i)=>{
+      if(h.includes('TOTAL')) totalCols.push(i);
+      if(h.includes('AUTOMATICO')) autoCols.push(i);
+      if(h.includes('DIGITADO')) digCols.push(i);
+    });
+
+    if(autoCols.length>0) dK_auto=toNum(dataRow[autoCols[0]]);
+    if(digCols.length>0)  dK_dig =toNum(dataRow[digCols[0]]);
+    if(totalCols.length>0) dK_tot=toNum(dataRow[totalCols[0]]);
+
+    if(totalCols.length>1) pK_tot =toNum(dataRow[totalCols[1]]);
+    if(digCols.length>1)   pK_dig =toNum(dataRow[digCols[1]]);
+    if(autoCols.length>1)  pK_auto=toNum(dataRow[autoCols[1]]);
+  }
+
+  if (pK_tot>0 && pK_auto===0 && pK_dig===0) {
+    const nums=dataRow.map(toNum).filter(n=>n>0);
+    if(nums.length>=8){
+      dK_auto=nums[0];
+      dK_dig =nums[1];
+      dK_tot =nums[2];
+      pK_tot =nums[5];
+      pK_dig =nums[6];
+      pK_auto=nums[7];
     }
   }
 
+  console.log('Peso final:',{dK_auto,dK_dig,dK_tot,pK_tot,pK_dig,pK_auto});
   return {dK_auto,dK_dig,dK_tot,pK_tot,pK_dig,pK_auto};
 }
 
@@ -877,9 +887,9 @@ function parseEvolucao(rows,diasMap){
   return {variacao,diasMap};
 }
 
-/* ==========================================
+/* ==============================
    LOAD SHEETS
-========================================== */
+============================== */
 async function loadFromSheets(){
   showOverlay('Buscando dados do Google Sheets...');
   setStatus('Sincronizando...','yellow');
@@ -954,9 +964,9 @@ async function loadFromSheets(){
   }
 }
 
-/* ==========================================
+/* ==============================
    LOAD EXCEL
-========================================== */
+============================== */
 function loadFile(event){
   const file=event.target.files[0];
   if(!file) return;
@@ -990,9 +1000,9 @@ function loadFile(event){
   reader.readAsBinaryString(file);
 }
 
-/* ==========================================
+/* ==============================
    STATUS / ACTIONS
-========================================== */
+============================== */
 function setStatus(txt,color){
   document.getElementById('statusTxt').textContent=txt;
   document.getElementById('statusDot').className='dot dot-'+color;
@@ -1014,9 +1024,9 @@ function resetDemo(){
   showToast('🔄 Dados de demonstração restaurados');
 }
 
-/* ==========================================
+/* ==============================
    RENDERS
-========================================== */
+============================== */
 function renderHeader(){
   document.getElementById('periodText').textContent=D.periodo||'—';
   document.getElementById('footerPeriod').textContent=D.periodo||'—';
@@ -1243,7 +1253,20 @@ function renderInsights(){
     </div>`).join('');
 }
 
-/* ========= INIT ========= */
+function renderAll(){
+  renderHeader();
+  renderKpiValor();
+  renderKpiPeso();
+  renderRecords();
+  renderDayCards();
+  renderMix();
+  renderEvolucao();
+  renderInsights();
+}
+
+/* ==============================
+   INIT
+============================== */
 window.addEventListener('load',loadFromSheets);
 </script>
 </body>
